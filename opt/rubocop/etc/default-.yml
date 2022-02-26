@@ -1,0 +1,87 @@
+AllCops:
+  NewCops: enable
+  DisabledByDefault: true
+  Exclude:
+    - 'vendor/**/*'
+    - '.local/**/*'
+    - '.github/**/*'
+
+# Layout
+
+Layout:
+  Enabled: true
+
+Layout/LineLength:
+  Max: 120
+
+# Lint
+
+Lint:
+  Enabled: true
+
+# Naming
+
+Naming:
+  Enabled: true
+
+Naming/FileName:
+  Enabled: true
+  Exclude:
+    - '**/*-*.rb'
+
+# Style
+
+Style/AndOr:
+  Enabled: true
+
+Style/DefWithParentheses:
+  Enabled: true
+
+Style/EmptyLiteral:
+  Enabled: true
+
+Style/For:
+  Enabled: true
+
+Style/HashSyntax:
+  Enabled: true
+
+Style/InfiniteLoop:
+  Enabled: true
+
+Style/MethodDefParentheses:
+  Enabled: true
+
+Style/NestedParenthesizedCalls:
+  Enabled: true
+
+Style/NilComparison:
+  Enabled: true
+
+Style/NonNilCheck:
+  Enabled: true
+
+Style/Not:
+  Enabled: true
+
+Style/ParenthesesAroundCondition:
+  Enabled: true
+
+Style/PreferredHashMethods:
+  Enabled: true
+
+Style/RedundantReturn:
+  Enabled: true
+
+Style/SelfAssignment:
+  Enabled: true
+
+Style/SymbolLiteral:
+  Enabled: true
+
+Style/UnlessElse:
+  Enabled: true
+
+Style/WhileUntilDo:
+  Enabled: true
+

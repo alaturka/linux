@@ -1,0 +1,44 @@
+[
+  {
+    "source": "lib/classroom.sh",
+    "series": [
+      {
+        "directive": "... src classroom\n",
+        "insertion": {
+          "before": 4,
+          "after": 7,
+          "signature": "\t[remote]='https://github.com/alaturka/linux'\n",
+          "digest": "d079f6ba47a2a78929d0d3d56e7fd5f736ef59ddb6b6ebf63243baf5be448436"
+        }
+      }
+    ]
+  },
+  {
+    "source": "lib/functions.sh",
+    "series": [
+      {
+        "directive": "... src functions\n",
+        "insertion": {
+          "before": 539,
+          "after": 56,
+          "signature": "\t[[ -n ${self_dir_:-} ]] || declare -g self_dir_=$(readlink -m \"${BASH_SOURCE[0]%/*}\"/..)\n",
+          "digest": "ab31a7a35d09c467c1611b29310c2a8436ff7747acbfc148b25375df77d61a32"
+        }
+      }
+    ]
+  },
+  {
+    "source": "libexec/bootstrap/classroom",
+    "series": [
+      {
+        "directive": "... src bootstrap\n",
+        "insertion": {
+          "before": 10,
+          "after": 333,
+          "signature": "\tlocal pp_name_=${1?${FUNCNAME[0]}: missing argument}; shift\n",
+          "digest": "497f97b63f090f57f9627f666f6eb47c349282945a63561ecde424ff035e66b0"
+        }
+      }
+    ]
+  }
+]

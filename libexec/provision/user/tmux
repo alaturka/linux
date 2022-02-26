@@ -1,0 +1,17 @@
+#!/bin/bash
+
+. <(functions)
+
+main() {
+	apt.install tmux
+
+	cp -asf "$(self.root tmux .)" /
+
+	local user; user=$(id -rnu 1000 2>/dev/null)
+	chsh -s "$(command -v tmux)" "$user"
+
+	# Avoid motd noise if Tmux is the login shell
+	[[ -z $(echo /etc/update-motd.d/*) ]] || chmod -x /etc/update-motd.d/*
+}
+
+main "$@"

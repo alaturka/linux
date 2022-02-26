@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	apt.install          \
+		ruby-all-dev \
+		ruby-bundler \
+		#
+
+	cat >/etc/gemrc <<-EOF
+		gem: --no-document
+	EOF
+}
+
+main "$@"

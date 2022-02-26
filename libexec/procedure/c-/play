@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+play() {
+	local source=$1; shift
+
+	local exec=${source%.*}
+
+	if [[ ! -x $exec ]] || [[ $exec -ot $source ]]; then
+		cc -lm -Wall -Werror -o "$exec" "$source"
+	fi
+
+	[[ -x $exec ]] || panic "No executable found: $exec"
+
+	builtin exec ./"$exec" "$@"
+}
+
+# --- Entry
+
+main() {
+	local source=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	play "$source" "$@"
+}
+
+main "$@"

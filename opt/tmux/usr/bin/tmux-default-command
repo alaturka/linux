@@ -1,0 +1,13 @@
+#!/bin/sh
+
+default_shell=$(tmux show-options -gqv default-shell)
+default_shell=${default_shell:-$SHELL}
+default_shell=${default_shell:-/bin/bash}
+
+current_window=$(tmux display-message -p '#I')
+
+if [ "$current_window" = "0" ]; then
+	tmux rename-window "Hello" && cd "$HOME" && exec "$default_shell" -l
+else
+	exec "$default_shell"
+fi

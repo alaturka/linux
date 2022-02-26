@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	npm install -g --silent --no-progress    \
+		eslint                           \
+		typescript                       \
+		@typescript-eslint/eslint-plugin \
+		@typescript-eslint/parser        \
+		#
+}
+
+main "$@"

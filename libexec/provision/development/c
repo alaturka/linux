@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	apt.install          \
+		clang        \
+		clang-format \
+		cmake        \
+		gcc          \
+		make         \
+		#
+}
+
+main "$@"

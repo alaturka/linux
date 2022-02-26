@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+builtin source "${BASH_SOURCE[0]%/*}"/../../lib/functions.sh
+builtin source "${BASH_SOURCE[0]%/*}"/../../lib/classroom.sh
+
+# --- Main
+
+bootstrap() {
+	assert.privilege
+}
+
+# --- Entry
+
+main() {
+	bootstrap && self.renew-
+}
+
+main "$@"

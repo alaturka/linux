@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# This commands also serves as quick checkup to check the health of deployment
+
+builtin source "${BASH_SOURCE[0]%/*}"/../../lib/functions.sh
+builtin source "${BASH_SOURCE[0]%/*}"/../../lib/classroom.sh
+
+# --- Entry
+
+main() {
+	git.describe "${BASH_SOURCE[0]%/*}"/../..
+}
+
+main "$@"

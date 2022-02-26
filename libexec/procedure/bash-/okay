@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+# --- Entry
+
+main() {
+	local source=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	bash -n "$source"
+}
+
+main "$@"

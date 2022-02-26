@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+syntax() {
+	cc -fsyntax-only "$@"
+}
+
+# --- Entry
+
+main() {
+	local source=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	sources+=("$source")
+
+	local header=${source%.*}.h
+	! [[ -f $header ]] || sources+=("$header")
+
+	syntax "${sources[@]}"
+}
+
+main "$@"

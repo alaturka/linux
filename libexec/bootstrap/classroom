@@ -1,0 +1,574 @@
+#!/usr/bin/env bash
+
+# Linux Classroom bootstrap script
+#
+# For help:
+#
+# 	curl -fsSL URL | bash -s -- -help
+#
+# For program information:
+#
+# 	curl -fsSL URL | bash -s -- -id
+
+# --- Support
+
+set -Eeuo pipefail; shopt -s nullglob; unset CDPATH; IFS=$' \t\n'; [[ -z ${TRACE:-} ]] || set -x
+export LC_ALL=C.UTF-8 LANG=C.UTF-8 DEBIAN_FRONTEND=noninteractive
+
+available() {
+	local prog=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	command -v "$prog" &>/dev/null
+}
+
+pp() {
+	local pp_name_=${1?${FUNCNAME[0]}: missing argument}; shift
+	local -n pp_ref_=$pp_name_
+	local pp_label_=${*:-"${!pp_ref_}"}
+
+	if [[ "$(declare -p "$pp_name_")" =~ declare\ -[aA] ]]; then
+		echo "$pp_label_"
+	
+		local key
+		for key in "${!pp_ref_[@]}"; do
+			printf '    %-32s%s\n' "${key}" "${pp_ref_[$key]}"
+		done | sort
+	else
+		printf '    %-32s%s\n' "${pp_label_}" "${pp_ref_}"
+	fi
+
+	echo
+}
+
+pp-() {
+	local pp_name_=${1?${FUNCNAME[0]}: missing argument}; shift
+	local -n pp_ref_=$pp_name_
+
+	if [[ "$(declare -p "$pp_name_")" =~ declare\ -[aA] ]]; then
+		local key
+		for key in "${!pp_ref_[@]}"; do
+			printf '    %-32s%s\n' "${key}" "${pp_ref_[$key]}"
+		done | sort
+	else
+		printf '    %-32s%s\n' '' "${pp_ref_}"
+	fi
+
+	echo
+}
+
+# --- UI
+
+abort()   { printf '\e[1m\e[38;5;9m✗\e[0m   \e[1m%s\e[0m\n'  "$*" >&2; exit 1;     }
+fail()    { printf '\e[1m\e[38;5;9m✗\e[0m   \e[1m%s\e[0m\n'  "$*" >&2;             }
+fail-()   { printf '\e[1m\e[38;5;9m✗\e[0m   \e[1m%s\e[0m\n'  "$*" >&2; return 1;   }
+getting() { printf '\e[1m\e[38;5;14m…\e[0m   \e[1m%s\e[0m\n' "$*" >&2;             }
+panic()   { printf '\e[1m\e[38;5;9m✗\e[0m   \e[0m%s\e[0m\n'  "$*" >&2; exit 128;   }
+quit()    { printf '\e[1m✓\e[0m   \e[1m%s\e[0m\n'            "$*" >&2; exit 0;     }
+running() { printf '\e[1m\e[38;5;14m>\e[0m   \e[1m%s\e[0m\n' "$*" >&2;             }
+succeed() { printf '\e[1m\e[38;5;10m✓\e[0m   \e[1m%s\e[0m\n' "$*" >&2;             }
+waiting() { printf '\e[1m\e[38;5;11m…\e[0m   \e[1m%s\e[0m\n' "$*" >&2;             }
+warn()    { printf '\e[1m\e[38;5;11m!\e[0m   \e[1m%s\e[0m\n' "$*" >&2;             }
+verbose() { [[ -n ${VERBOSE:-} ]] || [[ -n ${LC_VERBOSE:-} ]];                     } # LC_VERBOSE is a hack for sudo
+info()    { ! verbose || printf '\e[1m\e[38;5;3mℹ\e[0m   \e[0m%s\e[0m\n' "$*" >&2; }
+
+assert.directories() {
+	local missings=()
+
+	local dir
+	for dir; do
+		[[ -d $dir ]] || missings+=("$dir")
+	done
+
+	[[ ${#missings[@]} -eq 0 ]] || abort "Directories required: ${missings[*]}"
+}
+
+assert.files() {
+	local missings=()
+
+	local file
+	for file; do
+		[[ -f $file ]] || missings+=("$file")
+	done
+
+	[[ ${#missings[@]} -eq 0 ]] || abort "File(s) required: ${missings[*]}"
+}
+
+assert.os() {
+	local os=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	local id target=/etc/os-release
+
+	# shellcheck disable=1090
+	if [[ -f $target ]]; then
+		id=$(. "$target" && echo "$ID")
+	fi
+	
+	[[ -n ${id:-} ]] || panic 'Cannot determine OS type'
+
+	case $os in
+	debuntu) [[ $id == debian ]] || [[ $id == ubuntu ]] ;;
+	debian)  [[ $id == debian ]]                        ;;
+	ubuntu)  [[ $id == ubuntu ]]                        ;;
+	*)       panic "Unknown OS type: $os"               ;;
+	esac || abort "Unsupported OS: $os"
+}
+
+assert.privilege() {
+	[[ ${EUID:-} -eq 0 ]] || abort "Sudo required"
+}
+
+assert.programs() {
+	local missings=()
+
+	local prog
+	for prog; do
+		command -v "$prog" &>/dev/null || missings+=("$prog")
+	done
+
+	[[ ${#missings[@]} -eq 0 ]] || abort "Program(s) required: ${missings[*]}"
+}
+
+apt.clean() {
+	apt-get -y autoremove --purge || true
+	apt-get -y autoclean          || true
+}
+
+apt.install() {
+	apt.update && apt-get install -y --no-install-recommends "$@"
+}
+
+apt.install-() {
+	apt-get update -qq && apt-get install -y --no-install-recommends "$@"
+}
+
+apt.update() {
+	local target=/var/cache/apt/pkgcache.bin expiry=3
+
+	if ! [[ -f $target ]] || [[ -n $(find "$target" -maxdepth 0 -type f -mmin +"$expiry" 2>/dev/null) ]]; then
+		apt-get update -qq
+	fi
+}
+
+git.islocalandpresent() {
+	local url=${1?${FUNCNAME[0]}: missing argument}; shift
+	local dir=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	# Fast code path
+	if [[ $url == . ]] && [[ $dir == . ]]; then
+		return 0
+	fi
+
+	case $url in
+	file://*) url=${url#file://} ;;
+	esac
+
+	case $url in
+	*://*)
+		return 1
+		;;
+	*)
+		local this that
+
+		this=$(readlink -m "$url") || return
+		that=$(readlink -m "$dir") || return
+
+		if [[ $this == "$that" ]]; then
+			return 0
+		fi
+		;;
+	esac
+
+	return 1
+}
+
+git.clone() {
+	local url=${1?${FUNCNAME[0]}: missing argument}; shift
+	local dir=${1?${FUNCNAME[0]}: missing argument}; shift
+	local ref=${1:-}
+
+	if git.islocalandpresent "$url" "$dir"; then
+		info "Skip cloning as the repository seems local: $url"
+
+		return 0
+	fi
+
+	if [[ -e $dir ]]; then
+		fail "Destination already exists: $dir"
+		return 1
+	fi
+
+	local flags=(
+		'--single-branch'
+		'--quiet'
+	)
+
+	[[ -z ${ref:-} ]] || [[ $ref == . ]] || flags+=(
+		'--branch'
+		"$ref"
+	)
+
+	getting "Cloning $url"
+
+	local -i err=0
+	git clone "${flags[@]}" "$url" "$dir" || err=$?
+
+	if [[ $err -ne 0 ]]; then
+		fail "Cloning repository failed: $url"
+		rm -rf -- "$dir"
+	fi
+
+	return $err
+}
+
+# shellcheck disable=2120
+git.describe() {
+	local dir=${1:-.}
+
+	local description
+	description=$(git -C "$dir" describe --always --long 2>/dev/null || true)
+
+	echo "${description:-Unknown}"
+}
+
+# shellcheck disable=2120
+git.sane() {
+	local dir=${1:-.}
+
+	git -C "$dir" rev-parse --is-inside-work-tree &>/dev/null || return 1
+	git -C "$dir" rev-parse --verify HEAD &>/dev/null         || return 1
+}
+
+# git.sync syncs the working copy of a Git repository with the remote
+#
+# $1: working copy, default: current directory
+# $2: remote url,   default: current remote origin
+# $3: branch,       default: current branch
+#
+# Use "." or empty string in place of the argument to accept the default value
+# shellcheck disable=2120
+git.sync() {
+	local dir=.
+	if [[ $# -gt 0 ]]; then
+		[[ -z $1 ]] || [[ $1 == . ]] || dir=$1
+		shift
+	fi
+
+	if ! git -C "$dir" rev-parse --verify HEAD &>/dev/null; then
+		fail "Not a (valid) Git repository: $dir"
+		return 1
+	fi
+
+	local type
+	type=$(git -C "$dir" config --local --default=exact --get sync.type)
+
+	if [[ $type == never ]]; then
+		info "Skip syncing due to the sync type: $type"
+		return 0
+	fi
+
+	local epoch
+	epoch=$(git -C "$dir" config --local --default=0 --get sync.epoch)
+
+	if [[ $((EPOCHSECONDS - epoch)) -le ${GIT_SYNC_EXPIRE:-60} ]]; then
+		info "Skip syncing due to the sync epoch"
+		return 0
+	fi
+
+	local cururl
+	cururl=$(git -C "$dir" config remote.origin.url)
+
+	local url=$cururl
+	if [[ $# -gt 0 ]]; then
+		[[ -z $1 ]] || [[ $1 == . ]] || url=$1
+		shift
+	fi
+
+	local curref
+	curref=$(git -C "$dir" rev-parse --abbrev-ref HEAD)
+
+	local ref=$curref
+	if [[ $# -gt 0 ]]; then
+		[[ -z $1 ]] || [[ $1 == . ]] || ref=$1
+		shift
+	fi
+
+	local before after
+
+	getting "Syncing with $url"
+
+	before=$(git -C "$dir" rev-parse HEAD)
+
+	if [[ $url != "$cururl" ]] || [[ $ref != "$curref" ]]; then
+		[[ $url == "$cururl" ]] || git -C "$dir" config remote.origin.url "$url"
+
+		# Reset git fetch refs, so that it can fetch all branches (GH-3368)
+		git -C "$dir" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+		# Fetch remote branch
+		git -C "$dir" fetch --quiet --force origin "refs/heads/\"$ref\":refs/remotes/origin/$ref"
+		# Checkout and track the branch
+		git -C "$dir" checkout --quiet -B "$ref" -t origin/"$ref"
+		# Reset branch HEAD
+		git -C "$dir" reset --quiet --hard origin/"$ref"
+	else
+		git -C "$dir" fetch --quiet --force origin
+		# Reset branch HEAD
+		git -C "$dir" reset --quiet --hard origin/"$ref"
+	fi
+
+	after=$(git -C "$dir" rev-parse HEAD)
+
+	[[ $type == exact ]] || git -C "$dir" clean -xdfq
+
+	git -C "$dir" config --local sync.epoch "$EPOCHSECONDS"
+
+	if [[ $before == "$after" ]]; then
+		info 'No changes found'
+	else
+		info 'Changes found'
+
+		if verbose; then
+			git -C "$dir" \
+				--no-pager \
+				log \
+				--no-decorate \
+				--format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' \
+				"$before..HEAD"
+		fi
+	fi
+}
+
+is.wsl() {
+	local osrelease
+	read -r osrelease </proc/sys/kernel/osrelease
+
+	[[ ${osrelease,,} == *microsoft ]]
+}
+
+# --- Configuration
+
+# shellcheck disable=2034
+declare -Ag classroom=(
+	[remote]='https://github.com/alaturka/linux'
+	[local]='/opt/alaturka/linux'
+	[branch]=''
+
+	[username]='student'
+	[fullname]='Student'
+	[hostname]='classroom'
+)
+
+# --- Functions
+
+classroom.deploy() {
+	! available classroom || return 0
+
+	running 'Deploying classroom'
+
+	if [[ -z ${program[offline]} ]] && ! [[ -d ${classroom[local]} ]]; then
+		git.clone "${classroom[remote]}" "${classroom[local]}" "${classroom[branch]}"
+	fi
+
+	for exe in "${classroom[local]}"/bin/*; do
+		local shim=${exe##*/}
+
+		[[ -x $exe ]] || panic "Not an executable: $exe"
+
+		local target=/usr/bin/$shim
+
+		cat >"$target" <<-EOF
+			#!/bin/sh
+			exec "$(readlink -f "$exe")" "\$@"
+		EOF
+
+		chmod +x "$target"
+	done
+}
+
+classroom.preinstall() {
+	running 'Installing base packages'
+
+	# Disable downloading translations
+	cat >/etc/apt/apt.conf.d/99notranslations <<-EOF
+		Acquire::Languages "none";
+	EOF
+
+	# Do not install recommended or suggested packages by default
+	cat >/etc/apt/apt.conf.d/01norecommends <<-EOF
+		APT::Install-Recommends "false";
+		APT::Install-Suggests "false";
+	EOF
+
+	# Enable Nagios compatible output for needrestart to prevent chunks of verbose logs.
+	# This is clearly a hack, there is no clean way to avoid needrestart verbosity.
+	if [[ -d /etc/needrestart/conf.d ]]; then
+		cat >/etc/needrestart/conf.d/classroom.conf <<-'EOF'
+			$opt_p = 1;
+		EOF
+	fi
+
+	# Bare minimum
+	apt.install-  \
+		7zip  \
+		curl  \
+		git   \
+		gnupg \
+		sudo  \
+		#
+}
+
+classroom.user() {
+	! id -rnu 1000 &>/dev/null || return 0
+
+	running 'Adding classroom user'
+
+	adduser --uid 1000 --disabled-password --gecos "${classroom[fullname]},,," "${classroom[username]}"
+	adduser "${classroom[username]}" sudo
+
+	cat >/etc/sudoers.d/classroom <<-EOF
+		${classroom[username]} ALL=(ALL) NOPASSWD:ALL
+	EOF
+}
+
+classroom.wsl() {
+	is.wsl || return 0
+
+	running 'Setting up WSL'
+
+	cat >/etc/wsl.conf <<-EOF
+		[network]
+		hostname = ${classroom[hostname]}
+		generateHosts = false
+
+		[user]
+		default = ${classroom[username]}
+	EOF
+
+	local target=/etc/hosts
+	if [[ -f /etc/hosts ]]; then
+		sed -Ei 's/127[.]0[.]1[.]1\s+.*$/127.0.1.1\t'"${classroom[hostname]}"'.localdomain\t'"${classroom[hostname]}"'/' "$target"
+	fi
+}
+
+# --- Main
+
+bootstrap() {
+	assert.privilege
+	assert.os debuntu
+}
+
+initialize() {
+	[[ -z ${program[remote]:-} ]] || classroom[remote]=${program[remote]}
+	[[ -z ${program[local]:-}  ]] || classroom[local]=${program[local]}
+	[[ -z ${program[branch]:-} ]] || classroom[branch]=${program[branch]}
+
+	if git.islocalandpresent "${classroom[remote]}" "${classroom[local]}"; then
+		program[offline]=true
+	fi
+
+	readonly classroom program
+}
+
+introduce() {
+	echo "${program[description]} - ${program[id]}"
+}
+
+shutdown() {
+	apt.clean
+
+	succeed 'Linux Classroom bootstrapping successfully finished'
+}
+
+usage() {
+	[[ $# -eq 0 ]] || warn "$@"
+
+	cat >&2 <<EOF
+Usage: curl -fsSL URL | [sudo] bash -s [-- [Flags...]]
+
+(Requires Sudo permissions except -help and -id)
+
+Flags:
+
+	-branch BRANCH  Bootstrap from BRANCH
+	-help           Display help and return
+	-id             Display ident string for this script and return
+	-local DIR      Clone URL into DIR
+	-remote URL     Remote repository URL
+	-verbose        Be verbose
+EOF
+}
+
+# --- Entry
+
+# shellcheck disable=2016
+declare -Ag program=(
+	[description]='Linux Classroom Bootstrapper'
+	[id]='$Date: 27-02-2022 01:58:33$'
+	[remote]=''
+	[branch]=''
+	[local]=''
+	[offline]=''
+)
+
+main() {
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		-branch)
+			shift
+
+			[[ $# -gt 0 ]] || usage-
+
+			program[branch]=$1
+			;;
+		-local)
+			shift
+
+			[[ $# -gt 0 ]] || usage-
+
+			program[local]=$1
+			;;
+		-remote)
+			shift
+
+			[[ $# -gt 0 ]] || usage-
+
+			program[remote]=$1
+			;;
+
+		-help)
+			usage
+			return 0
+			;;
+		-id)
+			introduce
+			return 0
+			;;
+		-verbose)
+			export VERBOSE=true LC_VERBOSE=true
+			;;
+		-*)
+			usage "Unrecognized flag: $1"
+			return 1
+			;;
+		*)
+			break
+			;;
+		esac
+
+		shift
+	done
+
+	bootstrap
+
+	initialize "$@"
+
+	introduce
+
+	classroom.preinstall
+	classroom.user
+	classroom.wsl
+	classroom.deploy
+
+	shutdown
+}
+
+main "$@"

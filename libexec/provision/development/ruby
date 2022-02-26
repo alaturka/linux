@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	gem install                 \
+		rubocop             \
+		rubocop-minitest    \
+		rubocop-performance \
+		rubocop-rake        \
+		#
+}
+
+main "$@"

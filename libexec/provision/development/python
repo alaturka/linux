@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	pip3 install   \
+		flake8 \
+		2> >(grep -v "WARNING: Running pip as the 'root'") # Brain damage https://github.com/pypa/pip/issues/10556
+}
+
+main "$@"

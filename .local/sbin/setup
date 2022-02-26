@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+main() {
+	provision development/bash
+	provision development/conventionalcommits
+
+	! [[ -x .local/bin/setup ]] || sudo -u "$SUDO_USER" .local/bin/setup "$@"
+}
+
+main "$@"

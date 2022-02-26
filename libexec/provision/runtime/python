@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	apt.install               \
+		python-is-python3 \
+		python3-dev       \
+		python3-pip       \
+		#
+}
+
+main "$@"

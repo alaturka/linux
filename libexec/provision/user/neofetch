@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	apt.install neofetch
+
+	local user
+	user=$(id -rnu 1000 2>/dev/null)
+
+	local target=/etc/profile.d/mymotd.sh
+	if ! [[ -f $target ]] || ! grep -qF neofetch "$target"; then
+		cat >>"$target" <<-'EOF'
+			! command -v neofetch >/dev/null 2>&1 || neofetch
+		EOF
+		chmod +x "$target" 
+	fi
+
+	sudo -u "$user" sh -c 'touch ~/.hushlogin' &>/dev/null
+}
+
+main "$@"

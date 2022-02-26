@@ -1,0 +1,319 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'forwardable'
+require 'json'
+require 'open3'
+
+module Autograding
+  Error = Class.new StandardError
+
+  module Command
+    Result = Struct.new :argv, :out, :err, :status, :canceled, keyword_init: true do
+      def exitcode
+        @exitcode ||= status&.exitstatus || 128
+      end
+
+      def ok?
+        exitcode.zero?
+      end
+
+      def notok?
+        !ok?
+      end
+
+      def timeout?
+        Signal.signame(status&.termsig || 0) == 'XCPU'
+      end
+
+      def canceled?
+        canceled
+      end
+
+      def segfaulted?
+        Signal.signame(status&.termsig || 0) == 'SEGV'
+      end
+
+      def command
+        @command ||= argv[(argv.first.is_a?(::Hash) ? 1 : 0)..].join(' ')
+      end
+
+      def outs
+        @outs ||= out.split("\n")
+      end
+
+      def errs
+        @errs ||= err.split("\n")
+      end
+    end
+
+    def self.run(*argv, **kwargs)
+      canceled = false
+      trap('INT') { canceled = true }
+
+      out, err, status = Open3.capture3(*argv, **kwargs)
+
+      Result.new out: out, err: err, argv: argv, status: status, canceled: canceled
+    end
+
+    # rubocop:disable Layout
+    RLIMIT_SAFE = {
+      rlimit_cpu:   [300,                 301], # 300 seconds, that is 5 minutes (typical lambda maximum)
+                                                # +1 for hard limit to signal XCPU before reaching hard limit
+                                                # See https://stackoverflow.com/questions/38419570/setrlimit-in-ruby
+      rlimit_as:    [536_870_912, 536_870_912], # 512 MB, half of the memory of a micro instance
+      rlimit_data:  [536_870_912, 536_870_912], # 512 MB, half of the memory of a micro instance
+      rlimit_core:  0                           # no core dump
+    }.freeze
+    # rubocop:enable Layout
+
+    def self.run_limited(*argv, **kwargs)
+      run(*argv, **RLIMIT_SAFE.merge(kwargs))
+    end
+  end
+
+  module Meta
+    Test = Struct.new :name, :setup, :run, :input, :output, :comparison, :timeout, :points, keyword_init: true do
+      def expected
+        output
+      end
+
+      class << self
+        def from_hash(hash)
+          sanitize new(**hash.transform_keys(&:to_sym).slice(*members))
+        end
+
+        private
+
+        COMPARISONS = %w[included exact regex].freeze
+
+        def sanitize(meta)
+          if meta.comparison
+            raise Error, "Unsupported comparison: #{meta.comparison}" unless COMPARISONS.include?(meta.comparison)
+            raise Error, 'Output required for comparison' if meta.output.nil?
+
+            if meta.comparison == 'regex' && Regexp.try_convert(meta.output).nil?
+              raise Error, "Invalid regex pattern: #{meta.output}"
+            end
+          end
+
+          meta
+        end
+      end
+    end
+
+    def self.load(file)
+      JSON.parse(File.read(file))['tests'].map { |hash| Test.from_hash hash }
+    rescue JSON::ParserError => e
+      raise Error, "Error loading #{file} file: #{e.message}"
+    end
+  end
+
+  class Test
+    extend Forwardable
+
+    def_delegators :@meta, *%i[name comparison input expected points timeout]
+
+    TIMEOUT_DEFAULT = 15 # seconds
+
+    Error = Class.new Error do
+      def initialize(message, *details)
+        super(message)
+        @details = details
+      end
+
+      def details(indent: 4)
+        @details.map { |line| "#{' ' * indent}#{line}" }.join("\n")
+      end
+    end
+
+    def initialize(meta)
+      extend Assert.handler(@meta = meta)
+    end
+
+    def to_s
+      name
+    end
+
+    def run
+      result = Command.run_limited({ 'PATH' => paths }, @meta.run, stdin_data: input, rlimit_cpu: rlimit_cpu)
+
+      decline "Exceeding the timeout of #{timeout} seconds" if result.timeout?
+      decline 'Command canceled'                            if result.canceled?
+      decline 'Command segfaulted'                          if result.segfaulted?
+
+      assert(result) or decline(*details(result))
+    end
+
+    private
+
+    def paths
+      @paths ||= [File.expand_path(File.join(__dir__, '..', '..', 'bin')), ENV['PATH']].join(':')
+    end
+
+    def rlimit_cpu
+      @rlimit_cpu ||= timeout.nil? ? [TIMEOUT_DEFAULT, TIMEOUT_DEFAULT + 1] : [timeout, timeout + 1]
+    end
+
+    def decline(*messages)
+      raise Error.new(*messages)
+    end
+
+    REPORT_FORMAT = { # rubocop:disable Layout/ClassStructure
+      heading:        'Unexpected output',
+      actual_heading: 'Actual output:',
+      actual_empty:   'No output produced.',
+      expect_heading: 'Expected output:',
+      expect_empty:   'No output expected.',
+      indent:         4
+    }.freeze
+
+    def report(result, **kwargs) # rubocop:disable Metrics/MethodLength
+      kwargs = REPORT_FORMAT.merge(kwargs)
+      indent = ' ' * kwargs[:indent]
+
+      actual_lines =
+        if (actual = result.outs.map { |line| "#{indent}#{line}" }).empty?
+          [kwargs[:actual_empty]]
+        else
+          [kwargs[:actual_heading], *actual]
+        end
+
+      expect_lines =
+        if expected.empty?
+          [kwargs[:expect_empty]]
+        else
+          [kwargs[:expect_heading], "#{indent}#{expected}"]
+        end
+
+      [kwargs[:heading], '', *actual_lines, '', *expect_lines]
+    end
+
+    module Assert
+      module Included
+        def assert(result)
+          result.out.chomp.include? expected
+        end
+
+        def details(result)
+          report result
+        end
+      end
+
+      module Exact
+        def assert(result)
+          result.out.chomp == expected
+        end
+
+        def details(result)
+          report result
+        end
+      end
+
+      module Regex
+        def assert(result)
+          Regexp.new(expected).match? result.out
+        end
+
+        def details(result)
+          report result, expect_heading: 'Expected pattern:'
+        end
+      end
+
+      module Simple
+        def assert(result)
+          result.ok?
+        end
+
+        def details(result)
+          [].tap do |messages|
+            messages << "Command failed: #{result.command}"
+            messages << ''
+            messages.append(*result.errs)
+          end
+        end
+      end
+
+      HANDLERS = {
+        'included' => Included,
+        'exact'    => Exact,
+        'regex'    => Regex
+      }.freeze
+
+      def self.handler(meta)
+        return Simple if (meta.input.nil? || meta.input.empty?) && (meta.output.nil? || meta.output.empty?)
+
+        HANDLERS.fetch(meta.comparison, Simple)
+      end
+    end
+  end
+
+  class Runner
+    def initialize(metas)
+      @tests = metas.map { |meta| Test.new(meta) }
+    end
+
+    # rubocop:disable Metrics/AbcSize, Layout/ClassStructure
+    RUNNER_FORMAT = {
+      title:   "\e[1m\e[38;5;14m%d\e[0m   \e[1m%s\e[0m\n",
+      success: "\e[1m\e[38;5;10m✓\e[0m   \e[1m%s\e[0m\n\n",
+      failure: "\e[1m\e[38;5;9m✗   \e[0m\e[38;5;1m%s\e[0m%s\n\n",
+      summary: "\e[1m\e[38;5;14m=\e[0m   \e[1m%d %s\e[0m\n\n"
+    }.freeze
+
+    def run
+      points = 0
+
+      @tests.each_with_index do |test, i|
+        warn format(RUNNER_FORMAT[:title], i + 1, test.name)
+        test.run
+        warn format(RUNNER_FORMAT[:success], test.points)
+
+        points += test.points
+      rescue Test::Error => e
+        warn format(RUNNER_FORMAT[:failure], e.message, e.details)
+      end
+
+      warn format(RUNNER_FORMAT[:summary], points, '')
+    end
+    # rubocop:enable Metrics/AbcSize, Layout/ClassStructure
+
+    class << self
+      def load(file = nil)
+        new Meta.load(autograding_file!(file))
+      end
+
+      private
+
+      AUTOGRADING_FILE = File.join('.github', 'classroom', 'autograding.json')
+
+      def autograding_file!(file = nil)
+        if file
+          raise Error, "Autograding file not found: #{file}" unless File.exist?(file)
+
+          return file
+        end
+
+        loop do
+          return AUTOGRADING_FILE if File.exist? AUTOGRADING_FILE
+
+          Dir.chdir('..')
+        end
+
+        raise Error, 'No autograding file found'
+      end
+    end
+  end
+
+  def self.call(file = nil)
+    Runner.load(file).run
+  end
+end
+
+def main
+  Autograding.(ARGV.first)
+rescue Autograding::Error => e
+  abort e.message
+end
+
+main

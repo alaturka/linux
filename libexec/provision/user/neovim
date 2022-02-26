@@ -1,0 +1,9 @@
+#!/bin/bash
+
+. <(functions)
+
+main() {
+	apt.install neovim
+}
+
+main "$@"

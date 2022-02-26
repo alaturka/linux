@@ -1,0 +1,25 @@
+name: Check
+
+on:
+  push:         { branches: [main, next] }
+  pull_request: { branches: [main, next] }
+
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+        with: { fetch-depth: 0 }
+
+      - name: Bootstrap 🥁
+        run:  printf '%s\n%s\n' ./bin ./opt/self/usr/bin >>"$GITHUB_PATH"
+
+      - name: Setup 🔩
+        run:  sudo env PATH="$PATH" .local/sbin/setup
+
+      - name: Check 🔬
+        run:  .local/bin/check

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+main() {
+	cog check || exit 1
+}
+
+main "$@"
+

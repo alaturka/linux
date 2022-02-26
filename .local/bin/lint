@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+main() {
+	procedure bash/lint
+	scriptlet conventionalcommits/lint || true # FIXME
+}
+
+main "$@"

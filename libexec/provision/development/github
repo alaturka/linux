@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	available gh || apt.add                                               \
+		gh                                                            \
+		https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+		https://cli.github.com/packages                               \
+		stable                                                        \
+		main
+	
+	apt.install \
+		gh  \
+		#
+}
+
+main "$@"

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+lint() {
+	cc -fsyntax-only -Wall -Werror "$@"
+}
+
+style() {
+	local clean=()
+
+	if [[ ! -f .clang-format ]]; then
+		cp "$(self.root clang etc/default-.clang-format)" .clang-format
+		clean+=(.clang-format)
+	fi
+
+	local err=0
+
+	for source; do
+		if ! clang-format -Werror --dry-run "$source" &>/dev/null; then
+			err=$?
+
+			fail 'There are style errors: compare the corrected version (left) with your code (right)'; {
+				echo
+				diff -y <(clang-format "$source" || true) "$source"
+			} | sed -e 's/^/    /' >&2
+
+			break
+		fi
+	done
+
+	[[ ${#clean[@]} -eq 0 ]] || rm -rf -- "${clean[@]}"
+
+	return $err
+}
+
+# --- Entry
+
+main() {
+	local source=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	sources+=("$source")
+
+	local header=${source%.*}.h
+	! [[ -f $header ]] || sources+=("$header")
+
+	lint "${sources[@]}"
+	style "${sources[@]}"
+}
+
+main "$@"

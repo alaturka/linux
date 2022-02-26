@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+# --- Entry
+
+main() {
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		--)
+			shift
+			break
+			;;
+		-verbose)
+			export VERBOSE=true
+			;;
+		-*)
+			abort "Unrecognized flag: $1"
+			;;
+		*)
+			break
+			;;
+		esac
+
+		shift
+	done
+
+	procedure "$@"
+}
+
+main "$@"

@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+builtin source "${BASH_SOURCE[0]%/*}"/../lib/functions.sh
+builtin source "${BASH_SOURCE[0]%/*}"/../lib/classroom.sh
+
+# --- Main
+
+route() {
+	local command=${1?${FUNCNAME[0]}: missing argument}; shift
+
+	local external="${program[name]}"-"$command"
+
+	if [[ -n ${commands_by_desc[$command]:-} ]]; then
+		local exec="${program[dir]}"/libexec/"${program[name]}"/"$command"
+		[[ -x $exec ]] || panic "No executable found: $exec"
+
+		[[ -z ${commands_by_renew[$command]:-} ]] || renew
+
+		"$exec" "$@"
+	elif available "$external"; then
+		builtin exec exec "$external" "$@"
+	else
+		abort "No such command: $command"
+	fi
+}
+
+initialize() {
+	program[dir]=$(readlink -m "${BASH_SOURCE[0]%/*}/..")
+	# shellcheck disable=2034
+	readonly classroom program
+}
+
+renew() {
+	if [[ -n ${program[offline]:-} ]]; then
+		info "No renew when offline"
+		return 0
+	fi
+
+	assert.privilege
+	self.renew
+}
+
+# shellcheck disable=2120
+usage() {
+	local format="\t%-24s  %s\n"
+
+	echo "Usage: ${program[name]} [-verbose|-offline|-online] command [args...]"
+	echo
+
+	# shellcheck disable=2059
+	if [[ $# -eq 0 ]]; then
+		local command
+
+		for command in "${!commands_by_desc[@]}"; do
+			local help=${commands_by_desc[$command]:-}
+			printf "$format" "$command" "$help"
+		done | sort >&2
+	else
+		local command=$1
+
+		[[ -n ${commands_by_desc[$command]:-} ]] || abort "No such command: $command"
+
+		printf "$format" "$command" "${commands_by_desc[$command]:-}"
+	fi
+}
+
+usage-() {
+	[[ $# -eq 0 ]] || warn "$@"
+
+	usage
+	exit 1
+}
+
+# --- Entry
+
+declare -Ag program=(
+	[name]=${0##*/}
+	[dir]=''
+	[branch]=''
+	[offline]=''
+)
+
+declare -Agr commands_by_desc=(
+	[help]='Display help'
+	[install]='(Re)install classroom'
+	[provision]='Provision system'
+	[renew]='Renew this program'
+	[version]='Display version'
+)
+
+declare -Agr commands_by_renew=(
+	[install]=true
+	[provision]=true
+)
+
+main() {
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		-offline)
+			program[offline]=true
+			;;
+		-online)
+			program[offline]=''
+			;;
+		-verbose)
+			export VERBOSE=true
+			;;
+		-*)
+			usage- "Unrecognized flag: $1"
+			;;
+		*)
+			break
+			;;
+		esac
+
+		shift
+	done
+
+	[[ $# -gt 0 ]] || usage-
+
+	local command=$1
+	shift
+
+	if [[ $command == help ]]; then
+		usage "$@"
+		return 0
+	fi
+
+	initialize && route "$command" "$@"
+}
+
+main "$@"

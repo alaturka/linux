@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+# --- Entry
+
+main() {
+	local sources=()
+
+	mapfile -t sources < <(
+		find . -type f -and -not -path '*/.git/*' -print0 |
+		xargs -0 file --mime-type |
+		grep -w text/x-shellscript |
+		cut -f1 -d:
+	)
+
+	shellcheck "${sources[@]}"
+}
+
+main "$@"

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. <(functions)
+
+main() {
+	apt.install bash
+
+	cp -asf "$(self.root bash .)" /
+}
+
+main "$@"

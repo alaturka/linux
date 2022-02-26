@@ -1,0 +1,9 @@
+#!/bin/bash
+
+. <(functions)
+
+main() {
+	cp -asf "$(self.root self .)" /
+}
+
+main "$@"

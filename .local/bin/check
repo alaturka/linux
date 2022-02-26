@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+main() {
+	! [[ -x .local/bin/lint ]] || .local/bin/lint "$@"
+}
+
+main "$@"

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. <(functions)
+
+main() {
+	apt.install direnv
+
+	local target=/etc/profile.d/direnv.sh
+	if ! [[ -f $target ]]; then
+		cat >"$target" <<-'EOF'
+			! command -v direnv >/dev/null 2>&1 || eval "$(direnv hook bash)"
+		EOF
+	fi
+
+	local target=/etc/zsh/zshrc.d/direnv.sh
+	local dir=${target%/*}
+	if [[ -d $dir ]] && ! [[ -f $target ]]; then
+		mkdir -p "$dir"
+		cat >"$target" <<-'EOF'
+			! command -v direnv >/dev/null 2>&1 || eval "$(direnv hook zsh)"
+		EOF
+	fi
+}
+
+main "$@"

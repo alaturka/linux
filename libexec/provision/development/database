@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	apt.install     \
+		litecli \
+		#
+}
+
+main "$@"

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+self_dir_=$(readlink -m "${BASH_SOURCE[0]%/*}"/..)
+
+echo "declare -g self_dir_=$self_dir_" && echo "$(< "$self_dir_"/lib/functions.sh)" && echo "$@"

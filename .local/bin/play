@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+. <(functions at ...)
+
+declare -g mode=development
+
+play.boot() {
+	case $mode in
+	development)
+		./libexec/bootstrap/classroom -verbose -remote "$PWD" -local "$PWD"
+		;;
+	production)
+		curl -fsSL https://get.linux.alaturka.dev | bash -s -- -verbose
+		;;
+	esac
+}
+
+play.install() {
+	case $mode in
+	development)
+		./bin/classroom -verbose install
+		;;
+	production)
+		/usr/bin/classroom -verbose install
+		;;
+	esac
+}
+
+main() {
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		-production|-prod)
+			mode=production
+			;;
+		-development|-dev|-next)
+			mode=development
+			;;
+		-*)
+			abort "Unrecognized flag: $1"
+			return 1
+			;;
+		*)
+			break
+			;;
+		esac
+
+		shift
+	done
+
+	case ${1:-} in
+	boot)    play.boot ;;
+	install) play.install ;;
+	'')      abort 'Action required' ;;
+	esac
+}
+
+main "$@"

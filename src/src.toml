@@ -1,0 +1,186 @@
+extension = ".sh"
+
+# --- app
+[[symbols]]
+	symbol  = "app/classroom"
+# --- apt
+[[symbols]]
+	symbol  = "apt/add"
+[[symbols]]
+	symbol  = "apt/clean"
+[[symbols]]
+	symbol  = "apt/install"
+[[symbols]]
+	symbol  = "all/update"
+[[symbols]]
+	symbol  = "all/upgrade"
+# --- assert
+[[symbols]]
+	symbol  = "assert/directories"
+[[symbols]]
+	symbol  = "assert/files"
+[[symbols]]
+	symbol  = "assert/os"
+[[symbols]]
+	symbol  = "assert/privilege"
+[[symbols]]
+	symbol  = "assert/programs"
+# --- git
+[[symbols]]
+	symbol  = "git/clone"
+[[symbols]]
+	symbol  = "git/config"
+[[symbols]]
+	symbol  = "git/describe"
+[[symbols]]
+	symbol  = "git/resolve"
+[[symbols]]
+	symbol  = "git/sane"
+[[symbols]]
+	symbol  = "git/sync"
+# --- os
+[[symbols]]
+	symbol  = "os/codename"
+[[symbols]]
+	symbol  = "os/id"
+# --- kernel
+[[symbols]]
+	symbol  = "kernel/available"
+[[symbols]]
+	symbol  = "kernel/ui"
+[[symbols]]
+	symbol  = "kernel/ui-"
+# --- main
+[[symbols]]
+	symbol  = "main/argparse"
+[[symbols]]
+	symbol  = "main/at"
+[[symbols]]
+	symbol  = "main/here"
+[[symbols]]
+	symbol  = "main/prelude"
+# --- net
+[[symbols]]
+	symbol  = "net/ok"
+[[symbols]]
+	symbol  = "net/url"
+# --- self
+[[symbols]]
+	symbol  = "self/renew"
+[[symbols]]
+	symbol  = "self/route"
+[[symbols]]
+	symbol  = "self/root"
+[[symbols]]
+	symbol  = "self/source"
+# --- wsl
+[[symbols]]
+	symbol  = "wsl/is"
+# collections {{{
+[[symbols]]
+	symbol  = "assert"
+	depends = [
+		"assert/directories",
+		"assert/files",
+		"assert/os",
+		"assert/privilege",
+		"assert/programs",
+	]
+[[symbols]]
+	symbol  = "classroom"
+	depends = [
+		"app/classroom",
+	]
+[[symbols]]
+	symbol  = "l10n"
+	depends = [
+		"l10n/i18n",
+		"l10n/messages",
+	]
+[[symbols]]
+	symbol  = "prelude"
+	depends = [
+		"main/prelude",
+	]
+[[symbols]]
+	symbol  = "kernel"
+	depends = [
+		"kernel/available",
+		"kernel/pp",
+		"kernel/ui",
+	]
+[[symbols]]
+	symbol  = "kernel-"
+	depends = [
+		"kernel/available",
+		"kernel/ui-",
+	]
+[[symbols]]
+	symbol  = "bootstrap"
+	depends = [
+		"prelude",
+		"kernel",
+		"assert",
+
+		# --- apt
+		"apt/clean",
+		"apt/install",
+		"apt/update",
+
+		# --- git
+		"git/clone",
+		"git/describe",
+		"git/sane",
+		"git/sync",
+
+		# --- wsl
+		"wsl/is",
+
+		# -- classroom
+		"classroom",
+	]
+[[symbols]]
+	symbol  = "functions"
+	depends = [
+		"prelude",
+		"kernel",
+		"assert",
+
+		# --- apt
+		"apt/add",
+		"apt/clean",
+		"apt/install",
+		"apt/update",
+		"apt/upgrade",
+
+		# --- git
+		"git/clone",
+		"git/describe",
+		"git/resolve",
+		"git/sane",
+		"git/sync",
+
+		# --- main
+		"main/argparse",
+		"main/at",
+
+		# --- net
+		"net/ok",
+		"net/url",
+
+		# --- os
+		"os/codename",
+		"os/id",
+
+		# --- self
+		"self/renew",
+		"self/route",
+		"self/root",
+		"self/source",
+
+		# --- wsl
+		"wsl/is",
+	]
+# }}}
+
+# vim: set foldmethod=marker:

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+. <(functions)
+
+main() {
+	apt.install mc
+
+	cp -asf "$(self.root mc .)" /
+}
+
+main "$@"
