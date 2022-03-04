@@ -285,8 +285,6 @@ module Autograding
 
       private
 
-      AUTOGRADING_FILE = File.join('.github', 'classroom', 'autograding.json')
-
       def autograding_file!(file = nil)
         if file
           raise Error, "Autograding file not found: #{file}" unless File.exist?(file)
@@ -294,8 +292,18 @@ module Autograding
           return file
         end
 
+        @autograding_file ||= autograding_file_default!
+      end
+
+      AUTOGRADING_FILE_PATHS = [
+        File.join('.github', 'classroom', 'autograding.json'),
+        File.join('.local',  'etc',       'autograding.json')
+      ].freeze
+
+      def autograding_file_default!
         loop do
-          return AUTOGRADING_FILE if File.exist? AUTOGRADING_FILE
+          file = AUTOGRADING_FILE_PATHS.find { |path| File.exist? path }
+          return file if file
 
           Dir.chdir('..')
         end
