@@ -3,23 +3,7 @@
 . <(functions)
 
 main() {
-	local release id codename
-
-	release=node_17.x
-	id=$(os.id)
-
-	case $id in
-	ubuntu) codename=impish ;;
-	debian) codename=stable ;;
-	*)      panic "Unsupported distribution: $id" ;;
-	esac
-
-	available node || apt.add                                    \
-		nodejs                                               \
-		https://deb.nodesource.com/gpgkey/nodesource.gpg.key \
-		https://deb.nodesource.com/"$release"                \
-		"$codename"                                          \
-		main
+	available node || curl -fsSL https://deb.nodesource.com/setup_17.x | bash -s
 	
 	apt.install    \
 		nodejs \
