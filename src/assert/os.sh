@@ -15,5 +15,5 @@ assert.os() {
 	debian)  [[ $id == debian ]]                        ;;
 	ubuntu)  [[ $id == ubuntu ]]                        ;;
 	*)       panic "Unknown OS type: $os"               ;;
-	esac || abort "Unsupported OS: $os"
+	esac || abort "Unsupported OS: $id"
 }
