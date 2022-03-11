@@ -92,10 +92,11 @@ assert.os() {
 	[[ -n ${id:-} ]] || panic 'Cannot determine OS type'
 
 	case $os in
-	debuntu) [[ $id == debian ]] || [[ $id == ubuntu ]] ;;
-	debian)  [[ $id == debian ]]                        ;;
-	ubuntu)  [[ $id == ubuntu ]]                        ;;
-	*)       panic "Unknown OS type: $os"               ;;
+	debuntu) [[ $id == debian ]] || [[ $id == ubuntu ]] || [[ $id == pop ]] ;;
+	debian)  [[ $id == debian ]]                                            ;;
+	ubuntu)  [[ $id == ubuntu ]]                                            ;;
+	pop)     [[ $id == pop    ]]                                            ;;
+	*)       panic "Unknown OS type: $os"                                   ;;
 	esac || abort "Unsupported OS: $id"
 }
 

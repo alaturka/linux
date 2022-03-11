@@ -106,10 +106,11 @@ assert.os() {
 	[[ -n ${id:-} ]] || panic 'Cannot determine OS type'
 
 	case $os in
-	debuntu) [[ $id == debian ]] || [[ $id == ubuntu ]] ;;
-	debian)  [[ $id == debian ]]                        ;;
-	ubuntu)  [[ $id == ubuntu ]]                        ;;
-	*)       panic "Unknown OS type: $os"               ;;
+	debuntu) [[ $id == debian ]] || [[ $id == ubuntu ]] || [[ $id == pop ]] ;;
+	debian)  [[ $id == debian ]]                                            ;;
+	ubuntu)  [[ $id == ubuntu ]]                                            ;;
+	pop)     [[ $id == pop    ]]                                            ;;
+	*)       panic "Unknown OS type: $os"                                   ;;
 	esac || abort "Unsupported OS: $id"
 }
 
@@ -454,7 +455,7 @@ classroom.wsl() {
 
 bootstrap() {
 	assert.privilege
-	[[ -n ${program[relax]:-} ]] || assert.os debuntu
+	[[ -n ${program[anyos]:-} ]] || assert.os debuntu
 }
 
 initialize() {
@@ -494,7 +495,7 @@ Flags:
 	-id             Display ident string for this script and return
 	-local DIR      Clone URL into DIR
 	-remote URL     Remote repository URL
-	-relax          Do not assert OS strictly
+	-anyos          Do not assert OS strictly
 	-verbose        Be verbose
 EOF
 }
@@ -504,11 +505,11 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 11-03-2022 13:33:58$'
+	[id]='$Date: 11-03-2022 19:19:49$'
 	[branch]=''
 	[local]=''
 	[offline]=''
-	[relax]=''
+	[anyos]=''
 	[remote]=''
 )
 
@@ -529,8 +530,8 @@ main() {
 
 			program[local]=$1
 			;;
-		-relax)
-			program[relax]=true
+		-anyos)
+			program[anyos]=true
 			;;
 		-remote)
 			shift
