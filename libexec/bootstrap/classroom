@@ -385,6 +385,12 @@ classroom.deploy() {
 	done
 }
 
+classroom.install() {
+	running 'Installing Classroom'
+
+	classroom install
+}
+
 classroom.preinstall() {
 	running 'Installing base packages'
 
@@ -416,6 +422,27 @@ classroom.preinstall() {
 		unzip \
 		xz-utils
 		#
+}
+
+classroom.undeploy() {
+	[[ -d ${classroom[local]} ]] || return 0
+
+	running 'Undeploying classroom'
+
+	for exe in "${classroom[local]}"/bin/*; do
+		local shim=${exe##*/}
+
+		local src target
+
+		src=$(readlink -m "$shim")
+		target=$(readlink -m /usr/bin/"$shim")
+
+		if [[ -f $target ]] && [[ $src == "$target" ]]; then
+			rm -f -- "$target"
+		fi
+	done
+
+	[[ -n ${program[offline]} ]] || rm -rf -- "${classroom[local]}"
 }
 
 classroom.user() {
@@ -476,8 +503,6 @@ introduce() {
 
 shutdown() {
 	apt.clean
-
-	succeed 'Linux Classroom bootstrapping successfully finished'
 }
 
 usage() {
@@ -490,12 +515,14 @@ Usage: curl -fsSL URL | [sudo] bash -s [-- [Flags...]]
 
 Flags:
 
+	-afresh         Remove a previous deployment if exists
+	-anyos          Do not assert OS strictly
 	-branch BRANCH  Bootstrap from BRANCH
-	-help           Display help and return
 	-id             Display ident string for this script and return
 	-local DIR      Clone URL into DIR
 	-remote URL     Remote repository URL
-	-anyos          Do not assert OS strictly
+
+	-help           Display help and return
 	-verbose        Be verbose
 EOF
 }
@@ -505,17 +532,49 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 11-03-2022 19:19:49$'
+	[id]='$Date: 12-03-2022 01:25:13$'
+	[afresh]=''
+	[anyos]=''
+	[pre]=''
 	[branch]=''
 	[local]=''
 	[offline]=''
-	[anyos]=''
 	[remote]=''
 )
+
+pre() {
+	info 'Entering pre stage'
+
+	classroom.preinstall
+	classroom.user
+	classroom.wsl
+
+	[[ -z ${program[afresh]:-} ]] || classroom.undeploy
+	classroom.deploy
+
+	succeed 'Linux Classroom successfully bootstrapped'
+}
+
+post() {
+	info 'Entering post stage'
+
+	classroom.install
+
+	succeed 'Linux Classroom successfully installed'
+}
 
 main() {
 	while [[ $# -gt 0 ]]; do
 		case $1 in
+		-afresh)
+			program[afresh]=true
+			;;
+		-anyos)
+			program[anyos]=true
+			;;
+		-pre)
+			program[pre]=true
+			;;
 		-branch)
 			shift
 
@@ -529,9 +588,6 @@ main() {
 			[[ $# -gt 0 ]] || usage-
 
 			program[local]=$1
-			;;
-		-anyos)
-			program[anyos]=true
 			;;
 		-remote)
 			shift
@@ -570,10 +626,8 @@ main() {
 
 	introduce
 
-	classroom.preinstall
-	classroom.user
-	classroom.wsl
-	classroom.deploy
+	pre
+	[[ -n ${program[pre]:-} ]] || post
 
 	shutdown
 }

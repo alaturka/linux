@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - grading: Fallback to `.local/etc/autograding.json` for grading.
 - development/c: Add Tiny C Compiler.
 - bootstrap: Allow Pop!_OS.
+- bootstrap: Refactor the whole process to continue with full classroom installation.
 
 ### Changed
 
