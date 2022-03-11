@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - style/c: Increase Increase column limit to 120.
+- bootstrap: Add `--relax` switch to bypass OS assertion
 
 [0.1.0] - 2022-02-27
 --------------------

@@ -453,7 +453,7 @@ classroom.wsl() {
 
 bootstrap() {
 	assert.privilege
-	assert.os debuntu
+	[[ -n ${program[relax]:-} ]] || assert.os debuntu
 }
 
 initialize() {
@@ -493,6 +493,7 @@ Flags:
 	-id             Display ident string for this script and return
 	-local DIR      Clone URL into DIR
 	-remote URL     Remote repository URL
+	-relax          Do not assert OS strictly
 	-verbose        Be verbose
 EOF
 }
@@ -502,11 +503,12 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 27-02-2022 01:58:33$'
-	[remote]=''
+	[id]='$Date: 11-03-2022 03:25:25$'
 	[branch]=''
 	[local]=''
 	[offline]=''
+	[relax]=''
+	[remote]=''
 )
 
 main() {
@@ -525,6 +527,9 @@ main() {
 			[[ $# -gt 0 ]] || usage-
 
 			program[local]=$1
+			;;
+		-relax)
+			program[relax]=true
 			;;
 		-remote)
 			shift
