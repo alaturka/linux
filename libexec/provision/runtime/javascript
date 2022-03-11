@@ -9,8 +9,8 @@ main() {
 	id=$(os.id)
 
 	case $id in
-	ubuntu) codename=impish ;;
-	debian) codename=stable ;;
+	ubuntu|pop) codename=impish ;;
+	debian)     codename=stable ;;
 	*)      panic "Unsupported distribution: $id" ;;
 	esac
 
