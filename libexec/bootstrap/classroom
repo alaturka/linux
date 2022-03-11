@@ -425,21 +425,18 @@ classroom.preinstall() {
 }
 
 classroom.undeploy() {
-	[[ -d ${classroom[local]} ]] || return 0
-
 	running 'Undeploying classroom'
 
 	for exe in "${classroom[local]}"/bin/*; do
 		local shim=${exe##*/}
 
-		local src target
-
-		src=$(readlink -m "$shim")
-		target=$(readlink -m /usr/bin/"$shim")
-
-		if [[ -f $target ]] && [[ $src == "$target" ]]; then
-			rm -f -- "$target"
-		fi
+		local target
+		for target in /usr/bin/"$shim" /usr/local/bin/"$shim"; do
+			if [[ -x $target ]]; then
+				info "Removing $target"
+				rm -f -- "$target"
+			fi
+		done
 	done
 
 	[[ -n ${program[offline]} ]] || rm -rf -- "${classroom[local]}"
