@@ -521,6 +521,7 @@ Flags:
 	-branch BRANCH  Bootstrap from BRANCH
 	-id             Display ident string for this script and return
 	-local DIR      Clone URL into DIR
+	-pre            Perform only the pre stage
 	-remote URL     Remote repository URL
 
 	-help           Display help and return
@@ -533,7 +534,7 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 12-03-2022 02:47:54$'
+	[id]='$Date: 12-03-2022 02:54:36$'
 	[afresh]=''
 	[anyos]=''
 	[pre]=''
