@@ -408,11 +408,12 @@ classroom.preinstall() {
 
 	# Bare minimum
 	apt.install-  \
-		7zip  \
 		curl  \
 		git   \
 		gnupg \
 		sudo  \
+		unzip \
+		xz-utils
 		#
 }
 
@@ -503,7 +504,7 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 11-03-2022 03:25:25$'
+	[id]='$Date: 11-03-2022 13:33:58$'
 	[branch]=''
 	[local]=''
 	[offline]=''
