@@ -134,6 +134,10 @@ apt.clean() {
 	apt-get -y autoclean          || true
 }
 
+apt.fix() {
+	apt-get install -y -q --fix-broken || true
+}
+
 apt.install() {
 	apt.update && apt-get install -y --no-install-recommends "$@"
 }
@@ -414,7 +418,7 @@ classroom.preinstall() {
 	fi
 
 	# Bare minimum
-	apt.install-  \
+	apt.fix && apt.install-  \
 		curl  \
 		git   \
 		gnupg \
@@ -529,7 +533,7 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 12-03-2022 01:25:13$'
+	[id]='$Date: 12-03-2022 02:47:54$'
 	[afresh]=''
 	[anyos]=''
 	[pre]=''

@@ -10,7 +10,7 @@ bootstrap() {
 }
 
 initialize() {
-	apt.upgrade
+	apt.fix && apt.upgrade && apt.fix
 }
 
 shutdown() {
