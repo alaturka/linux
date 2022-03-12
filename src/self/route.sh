@@ -11,7 +11,7 @@ self.route() {
 
 	running "$route"
 
-	"$exec" "$@"
+	"$exec" "$@" || fail- "$route"
 }
 
 self.route-() {
