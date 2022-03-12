@@ -42,6 +42,10 @@ pp-() {
 	echo
 }
 
+try() {
+	"$@" || warn "'$*' exit code $? is suppressed"
+}
+
 # --- UI
 
 abort()   { printf '\e[1m\e[38;5;9m✗\e[0m   \e[1m%s\e[0m\n'  "$*" >&2; exit 1;     }
@@ -550,7 +554,7 @@ self.route() {
 
 	running "$route"
 
-	"$exec" "$@"
+	"$exec" "$@" || fail- "$route"
 }
 
 self.route-() {

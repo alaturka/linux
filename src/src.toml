@@ -47,6 +47,8 @@ extension = ".sh"
 [[symbols]]
 	symbol  = "kernel/available"
 [[symbols]]
+	symbol  = "kernel/try"
+[[symbols]]
 	symbol  = "kernel/ui"
 [[symbols]]
 	symbol  = "kernel/ui-"
@@ -107,6 +109,7 @@ extension = ".sh"
 	depends = [
 		"kernel/available",
 		"kernel/pp",
+		"kernel/try",
 		"kernel/ui",
 	]
 [[symbols]]

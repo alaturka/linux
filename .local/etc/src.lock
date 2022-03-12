@@ -19,10 +19,10 @@
       {
         "directive": "... src functions\n",
         "insertion": {
-          "before": 544,
+          "before": 548,
           "after": 56,
           "signature": "\t[[ -n ${self_dir_:-} ]] || declare -g self_dir_=$(readlink -m \"${BASH_SOURCE[0]%/*}\"/..)\n",
-          "digest": "df01c0d1be02323588b468c2e25ae9aee306135d15334d785050f21072977021"
+          "digest": "b7d081526530ced4258b1e236a6d2f58b17a2db2b47ba5eb1d773dfbacc80cf2"
         }
       }
     ]
@@ -34,9 +34,9 @@
         "directive": "... src bootstrap\n",
         "insertion": {
           "before": 10,
-          "after": 338,
+          "after": 342,
           "signature": "\tlocal pp_name_=${1?${FUNCNAME[0]}: missing argument}; shift\n",
-          "digest": "32e28f9c080209ff684c450ade7f4362e4bf690d80d17780c284adf1d5400662"
+          "digest": "dbdbdae64e0f23199ee92847e6771409a824f7539db15258a4fd198ae79a104d"
         }
       }
     ]
