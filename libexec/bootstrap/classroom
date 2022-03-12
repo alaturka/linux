@@ -546,7 +546,7 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 13-03-2022 00:34:33$'
+	[id]='$Date: 13-03-2022 00:53:06$'
 	[afresh]=''
 	[anyos]=''
 	[pre]=''
@@ -578,7 +578,7 @@ post() {
 }
 
 postmortem() {
-	notice <-EOF
+	notice <<-EOF
 
 		Linux Classroom Bootstrap failed.
 
