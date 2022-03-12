@@ -3,7 +3,7 @@
 . <(functions)
 
 main() {
-	apt.install     \
+	try apt.install \
 		litecli \
 		#
 }
