@@ -545,7 +545,7 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 12-03-2022 02:54:36$'
+	[id]='$Date: 13-03-2022 00:34:33$'
 	[afresh]=''
 	[anyos]=''
 	[pre]=''
@@ -574,6 +574,21 @@ post() {
 	classroom.install
 
 	succeed 'Linux Classroom successfully installed'
+}
+
+postmortem() {
+	notice <-EOF
+
+		Linux Classroom Bootstrap failed.
+
+		This might be a temporary failure. Please retry and, report if the issue persists:
+			https://github.com/alaturka/linux/issues/new/choose
+
+		Before reporting the issue, please carefully read the installation faq at:
+
+			https://classroom.alaturka.dev/help/install.html
+
+	EOF
 }
 
 main() {
@@ -639,10 +654,14 @@ main() {
 
 	introduce
 
-	pre
-	[[ -n ${program[pre]:-} ]] || post
+	local -i err=0; { pre; [[ -n ${program[pre]:-} ]] || post; } || {
+		err=$?
+		postmortem
+	}
 
 	shutdown
+
+	return $err
 }
 
 main "$@"
