@@ -21,6 +21,10 @@ All notable changes to this project will be documented in this file.
 - provision: Prevent provisioning failure for non critical package installations.
 - provision: Report failure message after a failed provisioning step.
 
+### Fixed
+
+- bootstrap: Fix failing logic.
+
 [0.1.0] - 2022-02-27
 --------------------
 

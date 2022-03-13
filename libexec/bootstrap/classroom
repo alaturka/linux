@@ -546,7 +546,7 @@ EOF
 # shellcheck disable=2016
 declare -Ag program=(
 	[description]='Linux Classroom Bootstrapper'
-	[id]='$Date: 13-03-2022 00:53:06$'
+	[id]='$Date: 14-03-2022 01:09:48$'
 	[afresh]=''
 	[anyos]=''
 	[pre]=''
@@ -555,6 +555,12 @@ declare -Ag program=(
 	[offline]=''
 	[remote]=''
 )
+
+boot() {
+	pre && succeed 'Linux Classroom successfully bootstrapped'
+	[[ -z ${program[pre]:-} ]] || return 0
+	post && succeed 'Linux Classroom successfully installed'
+}
 
 pre() {
 	info 'Entering pre stage'
@@ -565,29 +571,25 @@ pre() {
 
 	[[ -z ${program[afresh]:-} ]] || classroom.undeploy
 	classroom.deploy
-
-	succeed 'Linux Classroom successfully bootstrapped'
 }
 
 post() {
 	info 'Entering post stage'
 
 	classroom.install
-
-	succeed 'Linux Classroom successfully installed'
 }
 
 postmortem() {
+	fail 'Linux Classroom Bootstrap failed'
+
 	notice <<-EOF
 
-		Linux Classroom Bootstrap failed.
-
 		This might be a temporary failure. Please retry and, report if the issue persists:
-			https://github.com/alaturka/linux/issues/new/choose
+		        https://github.com/alaturka/linux/issues/new/choose
 
 		Before reporting the issue, please carefully read the installation faq at:
 
-			https://classroom.alaturka.dev/help/install.html
+		        https://classroom.alaturka.dev/help/install.html
 
 	EOF
 }
@@ -655,12 +657,11 @@ main() {
 
 	introduce
 
-	local -i err=0; { pre; [[ -n ${program[pre]:-} ]] || post; } || {
-		err=$?
-		postmortem
-	}
+	local -i err=0; boot || err=$?
 
 	shutdown
+
+	[[ $err -eq 0 ]] || postmortem
 
 	return $err
 }
