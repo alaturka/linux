@@ -5,9 +5,11 @@
 declare -g mode=development
 
 play.boot() {
+	[[ -n ${SUDO_USER:-} ]] || abort 'Sudo required'
+
 	case $mode in
 	development)
-		./libexec/bootstrap/classroom -verbose -remote "$PWD" -local "$PWD"
+		env PATH="$PWD"/bin:"$PATH" ./libexec/bootstrap/classroom -verbose -remote .  -local .
 		;;
 	production)
 		curl -fsSL https://get.linux.alaturka.dev | bash -s -- -verbose
@@ -16,6 +18,8 @@ play.boot() {
 }
 
 play.install() {
+	[[ -n ${SUDO_USER:-} ]] || abort 'Sudo required'
+
 	case $mode in
 	development)
 		./bin/classroom -verbose install
@@ -48,8 +52,8 @@ main() {
 	done
 
 	case ${1:-} in
-	boot)    play.boot ;;
-	install) play.install ;;
+	boot)    play.boot               ;;
+	install) play.install            ;;
 	'')      abort 'Action required' ;;
 	esac
 }
