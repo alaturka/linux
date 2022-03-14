@@ -170,7 +170,7 @@ module Autograding
 
     def report(result, **kwargs) # rubocop:disable Metrics/MethodLength
       kwargs = REPORT_FORMAT.merge(kwargs)
-      indent = ' ' * kwargs[:indent]
+      indent = ''
 
       actual_lines =
         if (actual = result.outs.map { |line| "#{indent}#{line}" }).empty?
