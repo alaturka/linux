@@ -229,7 +229,7 @@ module Autograding
           [].tap do |messages|
             messages << "Command failed: #{result.command}"
             messages << ''
-            messages.append(*result.errs)
+            messages.append(*result.outs, *result.errs)
           end
         end
       end
