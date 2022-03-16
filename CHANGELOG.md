@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 - grading: Fallback to `.local/etc/autograding.json` for grading.
 - development/c: Add Tiny C Compiler.
+- development/c: Add libbsd-dev.
 - bootstrap: Allow Pop!_OS.
 - bootstrap: Refactor the whole process to continue with full classroom installation.
 
@@ -20,10 +21,12 @@ All notable changes to this project will be documented in this file.
 - bootstrap: Add notice after a failure.
 - provision: Prevent provisioning failure for non critical package installations.
 - provision: Report failure message after a failed provisioning step.
+- lets: Remove extra indent at actual/expected output.
 
 ### Fixed
 
 - bootstrap: Fix failing logic.
+- lets: Append linter stdout to error message.
 
 [0.1.0] - 2022-02-27
 --------------------
