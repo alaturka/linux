@@ -8,6 +8,7 @@ main() {
 		clang-format \
 		cmake        \
 		gcc          \
+		libbsd-dev   \
 		make         \
 		tcc          \
 		#
