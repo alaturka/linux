@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - provision: Prevent provisioning failure for non critical package installations.
 - provision: Report failure message after a failed provisioning step.
 - lets: Remove extra indent at actual/expected output.
+- procedure(ruby): Use ".rubocop.yml" if exists.
 
 ### Fixed
 
