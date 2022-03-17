@@ -78,6 +78,10 @@ module Autograding
         output
       end
 
+      def timeout_in_seconds
+        timeout.nil? ? timeout : timeout * 60
+      end
+
       class << self
         def from_hash(hash)
           sanitize new(**hash.transform_keys(&:to_sym).slice(*members))
@@ -112,7 +116,7 @@ module Autograding
   class Test
     extend Forwardable
 
-    def_delegators :@meta, *%i[name comparison input expected points timeout]
+    def_delegators :@meta, *%i[name comparison input expected points timeout timeout_in_seconds]
 
     TIMEOUT_DEFAULT = 15 # seconds
 
@@ -152,7 +156,8 @@ module Autograding
     end
 
     def rlimit_cpu
-      @rlimit_cpu ||= timeout.nil? ? [TIMEOUT_DEFAULT, TIMEOUT_DEFAULT + 1] : [timeout, timeout + 1]
+      @rlimit_cpu ||=
+        timeout.nil? ? [TIMEOUT_DEFAULT, TIMEOUT_DEFAULT + 1] : [timeout_in_seconds, timeout_in_seconds + 1]
     end
 
     def decline(*messages)

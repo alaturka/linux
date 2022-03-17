@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 
 - bootstrap: Fix failing logic.
 - lets: Append linter stdout to error message.
+- lets: Treat timeout value as minutes.
 
 [0.1.0] - 2022-02-27
 --------------------
