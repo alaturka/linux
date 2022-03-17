@@ -7,11 +7,9 @@
 main() {
 	local source=${1?${FUNCNAME[0]}: missing argument}; shift
 
-	local config=.rubocop.yml
+	lfh.put "$(self.root rubocop etc/default-.yml)" .rubocop.yml
 
-	[[ -f $config ]] || config=$(self.root rubocop etc/default-.yml)
-
-	rubocop --config "$config" "$source"
+	rubocop "$source"
 }
 
 main "$@"

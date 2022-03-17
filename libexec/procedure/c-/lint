@@ -7,14 +7,9 @@ lint() {
 }
 
 style() {
-	local clean=()
+	lfh.put "$(self.root clang etc/default-.clang-format)" .clang-format
 
-	if [[ ! -f .clang-format ]]; then
-		cp "$(self.root clang etc/default-.clang-format)" .clang-format
-		clean+=(.clang-format)
-	fi
-
-	local err=0
+	local -i err=0
 
 	for source; do
 		if ! clang-format -Werror --dry-run "$source" &>/dev/null; then
@@ -28,8 +23,6 @@ style() {
 			break
 		fi
 	done
-
-	[[ ${#clean[@]} -eq 0 ]] || rm -rf -- "${clean[@]}"
 
 	return $err
 }
