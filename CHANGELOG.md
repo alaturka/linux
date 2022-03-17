@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - provision: Report failure message after a failed provisioning step.
 - lets: Remove extra indent at actual/expected output.
 - procedure(ruby): Use ".rubocop.yml" if exists.
+- procedure: Copy lint configs instead of referring via CLI switch.
 
 ### Fixed
 
