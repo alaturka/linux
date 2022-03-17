@@ -38,11 +38,6 @@ extension = ".sh"
 	symbol  = "git/sane"
 [[symbols]]
 	symbol  = "git/sync"
-# --- os
-[[symbols]]
-	symbol  = "os/codename"
-[[symbols]]
-	symbol  = "os/id"
 # --- kernel
 [[symbols]]
 	symbol  = "kernel/available"
@@ -52,6 +47,9 @@ extension = ".sh"
 	symbol  = "kernel/ui"
 [[symbols]]
 	symbol  = "kernel/ui-"
+# --- lfh
+[[symbols]]
+	symbol  = "lfh/file"
 # --- main
 [[symbols]]
 	symbol  = "main/argparse"
@@ -66,6 +64,11 @@ extension = ".sh"
 	symbol  = "net/ok"
 [[symbols]]
 	symbol  = "net/url"
+# --- os
+[[symbols]]
+	symbol  = "os/codename"
+[[symbols]]
+	symbol  = "os/id"
 # --- self
 [[symbols]]
 	symbol  = "self/renew"
@@ -162,6 +165,9 @@ extension = ".sh"
 		"git/resolve",
 		"git/sane",
 		"git/sync",
+
+		# --- lfh
+		"lfh/file",
 
 		# --- main
 		"main/argparse",

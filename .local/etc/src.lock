@@ -19,10 +19,10 @@
       {
         "directive": "... src functions\n",
         "insertion": {
-          "before": 556,
+          "before": 579,
           "after": 56,
           "signature": "\t[[ -n ${self_dir_:-} ]] || declare -g self_dir_=$(readlink -m \"${BASH_SOURCE[0]%/*}\"/..)\n",
-          "digest": "3dd6d78d6dfbada02be30b35ca3747b2418a91f8634c9390f00e9857f96198bd"
+          "digest": "c9e7d58d8aa8142830074d132743ba7def7b7b8fb5d7107b0c787531d3668571"
         }
       }
     ]
