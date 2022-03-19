@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+. <(functions)
+
+main() {
+	apt.install                        \
+		ca-certificates            \
+		dos2unix                   \
+		libsecret-tools            \
+		moreutils                  \
+		openssh-client             \
+		procps                     \
+		rsync                      \
+		software-properties-common \
+		#
+}
+
+main "$@"

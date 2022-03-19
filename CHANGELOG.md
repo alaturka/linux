@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - lets: Remove extra indent at actual/expected output.
 - procedure(ruby): Use ".rubocop.yml" if exists.
 - procedure: Copy lint configs instead of referring via CLI switch.
+- provision: Reorganize provision groups.
 
 ### Fixed
 

@@ -24,13 +24,13 @@ main() {
 
 	initialize
 
-	provision base/core
-
+	provision runtime/base
 	provision runtime/database
 	provision runtime/javascript
 	provision runtime/python
 	provision runtime/ruby
 
+	provision development/base
 	provision development/bash
 	provision development/c
 	provision development/database
@@ -39,13 +39,14 @@ main() {
 	provision development/python
 	provision development/ruby
 
-	provision user/bash
-	provision user/direnv
-	provision user/mc
-	provision user/neofetch
-	provision user/neovim
-	provision user/self
-	provision user/tmux
+	provision terminal/base
+	provision terminal/bash
+	provision terminal/direnv
+	provision terminal/mc
+	provision terminal/neofetch
+	provision terminal/neovim
+	provision terminal/self
+	provision terminal/tmux
 
 	shutdown
 }

@@ -5,20 +5,12 @@
 main() {
 	apt.install                        \
 		build-essential            \
-		ca-certificates            \
-		dos2unix                   \
 		jq                         \
 		libffi-dev                 \
-		libsecret-tools            \
 		libssl-dev                 \
 		libxml2                    \
 		libxml2-dev                \
 		lsb-release                \
-		moreutils                  \
-		openssh-client             \
-		procps                     \
-		rsync                      \
-		software-properties-common \
 		zlib1g-dev                 \
 		#
 }
