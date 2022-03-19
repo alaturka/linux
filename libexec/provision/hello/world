@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-. <(functions)
-
-main() {
-	echo Hello World
-}
-
-main "$@"
