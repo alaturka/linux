@@ -84,7 +84,7 @@ module Autograding
 
       class << self
         def from_hash(hash)
-          sanitize new(**hash.transform_keys(&:to_sym).slice(*members))
+          sanitize new(**normalize(hash.transform_keys(&:to_sym).slice(*members)))
         end
 
         private
@@ -102,6 +102,12 @@ module Autograding
           end
 
           meta
+        end
+
+        def normalize(hash)
+          hash.transform_values do |value|
+            value.is_a?(::String) ? value.gsub(/\r\n?/, "\n") : value
+          end
         end
       end
     end
@@ -164,40 +170,22 @@ module Autograding
       raise Error.new(*messages)
     end
 
-    REPORT_FORMAT = { # rubocop:disable Layout/ClassStructure
-      heading:        'Unexpected output',
-      actual_heading: 'Actual output:',
-      actual_empty:   'No output produced.',
-      expect_heading: 'Expected output:',
-      expect_empty:   'No output expected.',
-      indent:         4
-    }.freeze
+    def report(result)
+      ['Unexpected output', '', *actual_reports(result.outs), '', *expect_reports(expected.split("\n"))]
+    end
 
-    def report(result, **kwargs) # rubocop:disable Metrics/MethodLength
-      kwargs = REPORT_FORMAT.merge(kwargs)
-      indent = ''
+    def actual_reports(lines)
+      lines.empty? ? ['No output produced.'] : ['Actual output:',   *lines]
+    end
 
-      actual_lines =
-        if (actual = result.outs.map { |line| "#{indent}#{line}" }).empty?
-          [kwargs[:actual_empty]]
-        else
-          [kwargs[:actual_heading], *actual]
-        end
-
-      expect_lines =
-        if expected.empty?
-          [kwargs[:expect_empty]]
-        else
-          [kwargs[:expect_heading], "#{indent}#{expected}"]
-        end
-
-      [kwargs[:heading], '', *actual_lines, '', *expect_lines]
+    def expect_reports(lines)
+      lines.empty? ? ['No output expected.'] : ['Expected output:', *lines]
     end
 
     module Assert
       module Included
         def assert(result)
-          result.out.chomp.include? expected
+          result.out.include? expected
         end
 
         def details(result)
@@ -207,7 +195,7 @@ module Autograding
 
       module Exact
         def assert(result)
-          result.out.chomp == expected
+          result.out.chomp == expected || result.out == expected # as per Github behaviour
         end
 
         def details(result)
@@ -221,7 +209,7 @@ module Autograding
         end
 
         def details(result)
-          report result, expect_heading: 'Expected pattern:'
+          ['Actual output not matched with pattern', '', *actual_reports(result.outs), '', 'Expected pattern:', expected]
         end
       end
 
